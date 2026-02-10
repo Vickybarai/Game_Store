@@ -1,0 +1,168 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User Model with authentication and role management
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("user") // "user" or "admin"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders     Order[]
+  cart       Cart?
+  wishlist   Wishlist[]
+}
+
+// Game Model
+model Game {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  genre       String   // Action, RPG, Sports, etc.
+  platform    String   // PC, PS5, Xbox, Nintendo
+  price       Float
+  discountPrice Float?
+  image       String
+  stock       Int      @default(0)
+  releaseDate DateTime?
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  wishlistItems WishlistItem[]
+  tournamentGames TournamentGame[]
+}
+
+// Console Model
+model Console {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  specs       String
+  price       Float
+  discountPrice Float?
+  image       String
+  stock       Int      @default(0)
+  releaseDate DateTime?
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  wishlistItems WishlistItem[]
+}
+
+// Tournament Model
+model Tournament {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  date        DateTime
+  prize       Float
+  image       String
+  status      String   @default("upcoming") // "upcoming", "ongoing", "completed"
+  maxParticipants Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  games       TournamentGame[]
+}
+
+// Tournament to Game relationship
+model TournamentGame {
+  id           String   @id @default(cuid())
+  tournamentId String
+  gameId       String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  game         Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, gameId])
+}
+
+// Order Model
+model Order {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  items     OrderItem[]
+  total     Float
+  status    String      @default("pending") // "pending", "processing", "completed", "cancelled"
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+// Order Item Model
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  gameId    String?
+  game      Game?    @relation(fields: [gameId], references: [id])
+  consoleId String?
+  console   Console? @relation(fields: [consoleId], references: [id])
+  quantity  Int      @default(1)
+  price     Float
+}
+
+// Cart Model
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+// Cart Item Model
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  gameId    String?
+  game      Game?    @relation(fields: [gameId], references: [id])
+  consoleId String?
+  console   Console? @relation(fields: [consoleId], references: [id])
+  quantity  Int      @default(1)
+
+  @@unique([cartId, gameId, consoleId])
+}
+
+// Wishlist Model
+model Wishlist {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     WishlistItem[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+// Wishlist Item Model
+model WishlistItem {
+  id          String   @id @default(cuid())
+  wishlistId  String
+  wishlist    Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  gameId      String?
+  game        Game?    @relation(fields: [gameId], references: [id])
+  consoleId   String?
+  console     Console? @relation(fields: [consoleId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([wishlistId, gameId, consoleId])
+}

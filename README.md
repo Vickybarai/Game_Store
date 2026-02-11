@@ -1,3 +1,1 @@
-Hey 
-I created game store using (html ,css ,js) .
--- main source code private --
+ older version, gaming e-commerce platform. Discover the latest games, gaming consoles, and join exciting tournaments. 
